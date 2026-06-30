@@ -33,11 +33,11 @@ export default async function ExerciseHistoryPage({
       <div>
         <Link
           href="/exercises"
-          className="text-xs font-semibold uppercase tracking-widest text-charcoal-soft hover:text-charcoal"
+          className="text-sm font-display font-medium uppercase tracking-widest text-charcoal-soft hover:text-charcoal"
         >
           ← Library
         </Link>
-        <h1 className="mt-2 font-display text-4xl font-extrabold uppercase leading-[0.95]">
+        <h1 className="mt-2 font-display text-6xl font-black uppercase leading-[0.95]">
           {ex.name}
         </h1>
         <p className="mt-1 text-sm text-charcoal-soft">
@@ -63,12 +63,12 @@ export default async function ExerciseHistoryPage({
         {done.map((h) => (
           <li
             key={h.setId}
-            className="flex items-center justify-between rounded-2xl border border-line bg-white/40 px-4 py-3 text-sm"
+            className="flex items-center justify-between rounded-[6px] border border-line bg-line px-4 py-3 text-sm"
           >
             <span className="text-charcoal-soft">
               {formatDate(h.performedAt)} · set {h.setNumber}
             </span>
-            <span className="font-display font-bold tabular-nums">
+            <span className="font-display font-black tabular-nums">
               {fields
                 .map((f) => {
                   const v = h[f.key];

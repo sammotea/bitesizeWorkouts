@@ -17,7 +17,7 @@ export default async function HistoryPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="font-display text-4xl font-extrabold uppercase">History</h1>
+      <h1 className="font-display text-6xl font-black uppercase">History</h1>
 
       {error && (
         <p className="rounded-xl bg-red-100 px-4 py-3 text-sm text-red-800">
@@ -41,17 +41,17 @@ export default async function HistoryPage() {
             <li key={w.id}>
               <Link
                 href={`/history/${w.id}`}
-                className="block rounded-2xl border border-line bg-white/40 px-4 py-4 transition hover:border-charcoal/50 hover:bg-mint-soft"
+                className="block rounded-[6px] border border-line bg-line px-4 py-4 transition hover:border-charcoal/50 hover:bg-mint-soft"
               >
                 <div className="flex items-baseline justify-between">
-                  <span className="font-display text-lg font-bold">
+                  <span className="font-display text-lg font-black uppercase">
                     {WORKOUT_TYPES[w.type]?.label ?? w.type}
                   </span>
-                  <span className="text-xs text-charcoal-soft">
+                  <span className="text-sm text-charcoal-soft">
                     {formatDate(w.performedAt)}
                   </span>
                 </div>
-                <div className="mt-1 line-clamp-1 text-xs text-charcoal-soft">
+                <div className="mt-1 line-clamp-1 text-sm text-charcoal-soft">
                   {names || "—"}
                 </div>
               </Link>

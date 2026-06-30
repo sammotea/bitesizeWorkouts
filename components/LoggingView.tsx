@@ -79,18 +79,13 @@ export default function LoggingView() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-widest text-charcoal-soft">
-            {type.label} · {workout.sets} {workout.sets === 1 ? "set" : "sets"}
-          </div>
-          <h1 className="mt-1 font-display text-4xl font-extrabold uppercase">
-            In Progress
-          </h1>
+      <div className="flex items-center justify-between">
+        <div className="text-sm font-display font-medium uppercase tracking-widest text-charcoal-soft">
+          {type.label} · {workout.sets} {workout.sets === 1 ? "set" : "sets"}
         </div>
         <button
           onClick={reset}
-          className="text-xs font-semibold uppercase tracking-widest text-charcoal-soft hover:text-charcoal"
+          className="text-sm font-display font-medium uppercase tracking-widest text-charcoal-soft hover:text-charcoal"
         >
           Cancel
         </button>
@@ -109,19 +104,19 @@ export default function LoggingView() {
           return (
             <li
               key={key}
-              className="rounded-3xl border border-line bg-cream-deep p-4 transition-colors focus-within:border-mint-deep focus-within:bg-mint"
+              className="rounded-lg border border-line bg-line p-4 transition-colors focus-within:border-mint focus-within:bg-mint"
             >
               <div className="mb-3 flex items-baseline justify-between gap-2">
                 <div className="min-w-0">
-                  <div className="font-display text-xl font-bold leading-tight">
+                  <div className="font-display text-lg font-black uppercase leading-tight">
                     {ex.name}
                   </div>
-                  <div className="text-xs text-charcoal-soft">
+                  <div className="text-sm text-charcoal-soft">
                     {CATEGORY_LABELS[ex.category]}
                     {ref ? ` · ${ref}` : ""}
                   </div>
                 </div>
-                <div className="shrink-0 rounded-full bg-white/70 px-2.5 py-1 text-[0.7rem] font-bold uppercase tracking-widest text-charcoal-soft">
+                <div className="shrink-0 rounded-[4px] bg-cream px-2.5 py-1 text-sm font-display font-medium uppercase tracking-widest text-charcoal-soft">
                   Set {row.setNumber}
                 </div>
               </div>
@@ -132,19 +127,24 @@ export default function LoggingView() {
                     prev && prev[f.key] != null ? String(prev[f.key]) : "—";
                   return (
                     <label key={f.key} className="flex-1">
-                      <span className="mb-1 block text-[0.7rem] font-semibold uppercase tracking-widest text-charcoal-soft">
+                      <span className="mb-1 block text-sm font-display font-medium uppercase tracking-widest text-charcoal-soft">
                         {f.label}
                         {f.unit ? ` (${f.unit})` : ""}
                       </span>
                       <input
                         type="number"
-                        inputMode="decimal"
+                        inputMode={f.integer ? "numeric" : "decimal"}
+                        min={0}
+                        step={f.step}
                         value={entry[f.key]}
                         placeholder={placeholder}
-                        onChange={(e) =>
-                          updateLog(key, f.key, e.target.value)
-                        }
-                        className="w-full rounded-xl border border-line bg-white/80 px-3 py-2.5 font-display text-2xl font-bold tabular-nums outline-none transition placeholder:font-body placeholder:text-lg placeholder:font-normal placeholder:text-charcoal-soft/50 focus:border-charcoal"
+                        onChange={(e) => {
+                          // No negatives; whole numbers only where required.
+                          let v = e.target.value.replace(/-/g, "");
+                          if (f.integer) v = v.replace(/[.,]/g, "");
+                          updateLog(key, f.key, v);
+                        }}
+                        className="w-full rounded-[4px] border border-line bg-cream px-3 py-2.5 font-display text-2xl font-black tabular-nums outline-none transition placeholder:font-body placeholder:text-sm placeholder:font-normal placeholder:text-charcoal-soft/50 focus:border-charcoal"
                       />
                     </label>
                   );
@@ -156,12 +156,12 @@ export default function LoggingView() {
       </ol>
 
       {error && (
-        <p className="rounded-xl bg-red-100 px-4 py-3 text-sm text-red-800">
+        <p className="rounded-[4px] bg-red-100 px-4 py-3 text-sm text-red-800">
           {error}
         </p>
       )}
 
-      <Button onClick={finish} disabled={saving} className="w-full py-4 text-base">
+      <Button onClick={finish} disabled={saving} className="w-full py-4 text-sm">
         {saving ? "Saving…" : "Finished Workout"}
       </Button>
     </div>

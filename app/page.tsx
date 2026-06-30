@@ -1,18 +1,18 @@
 "use client";
 
+import { useEffect } from "react";
 import { useSession } from "@/lib/store";
-import ModifierPanel from "@/components/ModifierPanel";
-import CandidateView from "@/components/CandidateView";
+import GeneratorView from "@/components/GeneratorView";
 import LoggingView from "@/components/LoggingView";
 
 export default function HomePage() {
   const phase = useSession((s) => s.phase);
+  const ensureWorkout = useSession((s) => s.ensureWorkout);
 
-  return (
-    <div>
-      {phase === "config" && <ModifierPanel />}
-      {phase === "candidate" && <CandidateView />}
-      {phase === "logging" && <LoggingView />}
-    </div>
-  );
+  // Show a pre-generated standard workout on first load.
+  useEffect(() => {
+    ensureWorkout();
+  }, [ensureWorkout]);
+
+  return phase === "logging" ? <LoggingView /> : <GeneratorView />;
 }

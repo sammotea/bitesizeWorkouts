@@ -1,15 +1,15 @@
 @import "tailwindcss";
 
 @theme {
-  /* Palette — warm cream, charcoal, mint (from the design vibe) */
-  --color-cream: #f2f0ea;
-  --color-cream-deep: #e9e6dd;
-  --color-charcoal: #2b2b26;
-  --color-charcoal-soft: #6b6b62;
-  --color-mint: #bfe3b5;
-  --color-mint-soft: #d8eed1;
-  --color-mint-deep: #8fc985;
-  --color-line: #dcd9cf;
+  /* Palette — sampled directly from the design PNG.
+     Greens: primary highlight = button green, secondary = card/background green.
+     Neutrals reduced to: background, light mid-tone, dark mid-tone, ink. */
+  --color-cream: #f4f3ee; /* background */
+  --color-charcoal: #2e2b25; /* ink — proper text */
+  --color-charcoal-soft: #6f6c62; /* dark mid-tone — secondary text + headers */
+  --color-line: #e3e1d9; /* light mid-tone — borders + standout backgrounds */
+  --color-mint: #a9d2ac; /* primary highlight — button green */
+  --color-mint-soft: #d6e7d6; /* secondary highlight — card/background green */
 
   /* Fonts — wired to next/font CSS variables (set in layout) */
   --font-display: var(--font-gabarito), system-ui, sans-serif;

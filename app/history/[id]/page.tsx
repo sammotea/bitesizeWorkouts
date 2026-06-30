@@ -26,11 +26,11 @@ export default async function WorkoutDetailPage({
       <div>
         <Link
           href="/history"
-          className="text-xs font-semibold uppercase tracking-widest text-charcoal-soft hover:text-charcoal"
+          className="text-sm font-display font-medium uppercase tracking-widest text-charcoal-soft hover:text-charcoal"
         >
           ← History
         </Link>
-        <h1 className="mt-2 font-display text-4xl font-extrabold uppercase">
+        <h1 className="mt-2 font-display text-6xl font-black uppercase">
           {type?.label ?? workout.type}
         </h1>
         <p className="mt-1 text-sm text-charcoal-soft">
@@ -51,21 +51,21 @@ export default async function WorkoutDetailPage({
           return (
             <li
               key={`${item.exerciseId}-${i}`}
-              className="rounded-2xl border border-line bg-white/40 p-4"
+              className="rounded-[6px] border border-line bg-line p-4"
             >
               <div className="flex items-baseline justify-between gap-2">
                 <Link
                   href={`/exercises/${ex.id}`}
-                  className="font-display text-lg font-bold hover:underline"
+                  className="font-display text-lg font-black uppercase hover:underline"
                 >
                   {ex.name}
                 </Link>
-                <span className="text-xs text-charcoal-soft">
+                <span className="text-sm text-charcoal-soft">
                   {CATEGORY_LABELS[ex.category]}
                 </span>
               </div>
               {ref && (
-                <div className="text-xs text-charcoal-soft">{ref}</div>
+                <div className="text-sm text-charcoal-soft">{ref}</div>
               )}
 
               <div className="mt-3 flex flex-col gap-1.5">
@@ -98,7 +98,7 @@ function SetRow({
       <span
         className={
           set.completed
-            ? "font-display font-bold tabular-nums"
+            ? "font-display font-black tabular-nums"
             : "text-charcoal-soft/60"
         }
       >

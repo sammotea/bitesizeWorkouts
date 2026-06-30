@@ -10,7 +10,7 @@ import type {
   WorkoutType,
 } from "./types";
 
-export type Phase = "config" | "candidate" | "logging";
+export type Phase = "generator" | "logging";
 
 export interface LogEntry {
   weight: string;
@@ -51,19 +51,23 @@ interface SessionState {
   logs: Record<string, LogEntry>;
   saving: boolean;
 
-  setType: (key: WorkoutType["key"]) => void;
+  /** Toggle a non-standard type; clicking the active one reverts to standard. */
+  toggleType: (key: WorkoutType["key"]) => void;
   setBiasKind: (index: number, kind: "focus" | "avoid") => void;
   setBiasPart: (index: number, part: BodyPart) => void;
   removeBias: (index: number) => void;
   clearBiases: () => void;
-  generate: () => void;
+  /** Re-roll a fresh workout with the current type + biases. */
+  regenerate: () => void;
+  /** Generate an initial workout on first load if none exists yet. */
+  ensureWorkout: () => void;
   accept: () => Promise<void>;
   updateLog: (key: string, field: keyof LogEntry, value: string) => void;
   reset: () => void;
 }
 
 export const useSession = create<SessionState>((set, get) => ({
-  phase: "config",
+  phase: "generator",
   typeKey: "standard",
   biasRows: [emptyRow()],
   workout: null,
@@ -71,12 +75,26 @@ export const useSession = create<SessionState>((set, get) => ({
   logs: {},
   saving: false,
 
-  setType: (key) => set({ typeKey: key }),
+  toggleType: (key) =>
+    set((s) => {
+      const typeKey = s.typeKey === key ? "standard" : key;
+      return {
+        typeKey,
+        workout: generateWorkout(typeKey, deriveBiases(s.biasRows)),
+      };
+    }),
 
   setBiasKind: (index, kind) =>
-    set((s) => ({
-      biasRows: s.biasRows.map((r, i) => (i === index ? { ...r, kind } : r)),
-    })),
+    set((s) => {
+      const rows = s.biasRows.map((r, i) => (i === index ? { ...r, kind } : r));
+      // Toggling +/- on an empty draft row doesn't change the biases, so
+      // don't re-roll the workout — only regenerate when a part is selected.
+      if (rows[index].part === null) return { biasRows: rows };
+      return {
+        biasRows: rows,
+        workout: generateWorkout(s.typeKey, deriveBiases(rows)),
+      };
+    }),
 
   setBiasPart: (index, part) =>
     set((s) => {
@@ -85,23 +103,41 @@ export const useSession = create<SessionState>((set, get) => ({
       );
       // Selecting a part in the last row reveals a fresh draft row.
       if (index === rows.length - 1) rows.push(emptyRow());
-      return { biasRows: rows };
+      return {
+        biasRows: rows,
+        workout: generateWorkout(s.typeKey, deriveBiases(rows)),
+      };
     }),
 
   removeBias: (index) =>
     set((s) => {
-      const rows = s.biasRows.filter((_, i) => i !== index);
+      const filtered = s.biasRows.filter((_, i) => i !== index);
       // Always keep at least one (draft) row visible.
-      return { biasRows: rows.length > 0 ? rows : [emptyRow()] };
+      const rows = filtered.length > 0 ? filtered : [emptyRow()];
+      return {
+        biasRows: rows,
+        workout: generateWorkout(s.typeKey, deriveBiases(rows)),
+      };
     }),
 
-  clearBiases: () => set({ biasRows: [emptyRow()] }),
+  clearBiases: () =>
+    set((s) => {
+      const rows = [emptyRow()];
+      return {
+        biasRows: rows,
+        workout: generateWorkout(s.typeKey, deriveBiases(rows)),
+      };
+    }),
 
-  generate: () =>
+  regenerate: () =>
     set((s) => ({
       workout: generateWorkout(s.typeKey, deriveBiases(s.biasRows)),
-      phase: "candidate",
+      phase: "generator",
     })),
+
+  ensureWorkout: () => {
+    if (!get().workout) get().regenerate();
+  },
 
   accept: async () => {
     const { workout } = get();
@@ -140,12 +176,17 @@ export const useSession = create<SessionState>((set, get) => ({
       },
     })),
 
-  reset: () =>
+  reset: () => {
+    // Back to the initial page: standard type, no biases, fresh workout.
+    const biasRows = [emptyRow()];
     set({
-      phase: "config",
-      workout: null,
+      phase: "generator",
+      typeKey: "standard",
+      biasRows,
+      workout: generateWorkout("standard", deriveBiases(biasRows)),
       prevRecords: {},
       logs: {},
       saving: false,
-    }),
+    });
+  },
 }));
