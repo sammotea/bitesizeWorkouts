@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  /* Palette — warm cream, charcoal, mint (from the design vibe) */
+  --color-cream: #f2f0ea;
+  --color-cream-deep: #e9e6dd;
+  --color-charcoal: #2b2b26;
+  --color-charcoal-soft: #6b6b62;
+  --color-mint: #bfe3b5;
+  --color-mint-soft: #d8eed1;
+  --color-mint-deep: #8fc985;
+  --color-line: #dcd9cf;
+
+  /* Fonts — wired to next/font CSS variables (set in layout) */
+  --font-display: var(--font-gabarito), system-ui, sans-serif;
+  --font-body: var(--font-familjen), system-ui, sans-serif;
+
+  --radius-card: 1.75rem;
+}
+
+html,
+body {
+  background-color: var(--color-cream);
+  color: var(--color-charcoal);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Display headings */
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* Number inputs without spinners for a cleaner metric UI */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
