@@ -104,7 +104,7 @@ export default function LoggingView() {
           return (
             <li
               key={key}
-              className="rounded-lg border border-line bg-line p-4 transition-colors focus-within:border-mint focus-within:bg-mint"
+              className="group rounded-lg border border-line bg-white p-4 transition-colors focus-within:border-mint focus-within:bg-mint"
             >
               <div className="mb-3 flex items-baseline justify-between gap-2">
                 <div className="min-w-0">
@@ -116,7 +116,7 @@ export default function LoggingView() {
                     {ref ? ` · ${ref}` : ""}
                   </div>
                 </div>
-                <div className="shrink-0 rounded-[4px] bg-cream px-2.5 py-1 text-sm font-display font-medium uppercase tracking-widest text-charcoal-soft">
+                <div className="shrink-0 rounded-[4px] bg-line px-2.5 py-1 text-sm font-display font-medium uppercase tracking-widest text-charcoal-soft transition-colors group-focus-within:bg-white">
                   Set {row.setNumber}
                 </div>
               </div>
@@ -124,7 +124,7 @@ export default function LoggingView() {
               <div className="flex gap-3">
                 {fields.map((f) => {
                   const placeholder =
-                    prev && prev[f.key] != null ? String(prev[f.key]) : "—";
+                    prev && prev[f.key] != null ? String(prev[f.key]) : "";
                   return (
                     <label key={f.key} className="flex-1">
                       <span className="mb-1 block text-sm font-display font-medium uppercase tracking-widest text-charcoal-soft">
@@ -144,7 +144,7 @@ export default function LoggingView() {
                           if (f.integer) v = v.replace(/[.,]/g, "");
                           updateLog(key, f.key, v);
                         }}
-                        className="w-full rounded-[4px] border border-line bg-cream px-3 py-2.5 font-display text-2xl font-black tabular-nums outline-none transition placeholder:font-body placeholder:text-sm placeholder:font-normal placeholder:text-charcoal-soft/50 focus:border-charcoal"
+                        className="w-full rounded-[4px] border border-line bg-cream px-3 py-2.5 font-display text-2xl font-black tabular-nums outline-none transition placeholder:font-body placeholder:text-sm placeholder:font-normal placeholder:text-charcoal-soft/50 focus:border-charcoal group-focus-within:bg-white"
                       />
                     </label>
                   );
@@ -162,7 +162,7 @@ export default function LoggingView() {
       )}
 
       <Button onClick={finish} disabled={saving} className="w-full py-4 text-sm">
-        {saving ? "Saving…" : "Finished Workout"}
+        {saving ? "Saving…" : "Finish Workout"}
       </Button>
     </div>
   );

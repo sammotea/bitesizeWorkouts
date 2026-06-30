@@ -28,7 +28,7 @@ export default async function WorkoutDetailPage({
           href="/history"
           className="text-sm font-display font-medium uppercase tracking-widest text-charcoal-soft hover:text-charcoal"
         >
-          ← History
+          Back
         </Link>
         <h1 className="mt-2 font-display text-6xl font-black uppercase">
           {type?.label ?? workout.type}

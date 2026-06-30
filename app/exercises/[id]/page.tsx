@@ -35,7 +35,7 @@ export default async function ExerciseHistoryPage({
           href="/exercises"
           className="text-sm font-display font-medium uppercase tracking-widest text-charcoal-soft hover:text-charcoal"
         >
-          ← Library
+          Back
         </Link>
         <h1 className="mt-2 font-display text-6xl font-black uppercase leading-[0.95]">
           {ex.name}
