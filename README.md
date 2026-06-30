@@ -16,10 +16,14 @@ per-exercise.
 
 ```bash
 npm install
-cp .env.example .env        # fill in DATABASE_URL (Neon) + APP_SECRET
+# Create .env.local with your Neon connection string:
+#   DATABASE_URL="postgresql://...neon.tech/db?sslmode=require"
+# (or: npx vercel env pull .env.local)
 npm run db:push             # create tables in your Neon database
 npm run dev                 # http://localhost:3000
 ```
+
+Optional: set `APP_SECRET` + `NEXT_PUBLIC_APP_SECRET` (same value) to guard the save endpoint.
 
 The app runs without a database — generate/reroll/accept all work, and history pages show an
 empty state. A database is only needed to **save** workouts and see history / previous-record

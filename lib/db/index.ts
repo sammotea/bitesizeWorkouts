@@ -13,7 +13,7 @@ export function getDb(): NeonHttpDatabase<typeof schema> {
   const url = process.env.DATABASE_URL;
   if (!url) {
     throw new Error(
-      "DATABASE_URL is not set. Copy .env.example to .env.local and add your Neon connection string.",
+      "DATABASE_URL is not set. Add your Neon connection string to .env.local.",
     );
   }
   cached = drizzle(neon(url), { schema });
