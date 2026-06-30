@@ -104,25 +104,3 @@ export function generateWorkout(
     })),
   };
 }
-
-/**
- * Expand a generated composition into the interleaved per-set logging order.
- * e.g. standard 2-set => [major, minor, dynamic, static, major, minor, dynamic, static].
- * Returns one entry per (set, exercise) pair.
- */
-export function expandToSets(
-  workout: GeneratedWorkout,
-): { exerciseId: string; category: Category; setNumber: number }[] {
-  const out: { exerciseId: string; category: Category; setNumber: number }[] =
-    [];
-  for (let set = 1; set <= workout.sets; set++) {
-    for (const item of workout.composition) {
-      out.push({
-        exerciseId: item.exerciseId,
-        category: item.category,
-        setNumber: set,
-      });
-    }
-  }
-  return out;
-}

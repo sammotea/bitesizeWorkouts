@@ -1,5 +1,5 @@
 import { desc, eq, inArray } from "drizzle-orm";
-import { db } from "./index";
+import { getDb } from "./index";
 import { setLogs, workouts } from "./schema";
 import type {
   Biases,
@@ -17,6 +17,7 @@ export interface SaveWorkoutInput {
 }
 
 export async function saveWorkout(input: SaveWorkoutInput): Promise<string> {
+  const db = getDb();
   const [workout] = await db
     .insert(workouts)
     .values({
@@ -45,6 +46,7 @@ export async function saveWorkout(input: SaveWorkoutInput): Promise<string> {
 }
 
 export async function listWorkouts() {
+  const db = getDb();
   return db
     .select()
     .from(workouts)
@@ -53,6 +55,7 @@ export async function listWorkouts() {
 }
 
 export async function getWorkout(id: string) {
+  const db = getDb();
   const [workout] = await db
     .select()
     .from(workouts)
@@ -70,6 +73,7 @@ export async function getWorkout(id: string) {
 
 /** All logged sets for one exercise, newest first, joined to workout date. */
 export async function getExerciseHistory(exerciseId: string) {
+  const db = getDb();
   return db
     .select({
       setId: setLogs.id,
@@ -99,6 +103,7 @@ export async function getPreviousRecords(
   const result: Record<string, PreviousRecord> = {};
   if (ids.length === 0) return result;
 
+  const db = getDb();
   const rows = await db
     .select({
       exerciseId: setLogs.exerciseId,

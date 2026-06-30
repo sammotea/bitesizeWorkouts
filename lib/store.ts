@@ -42,6 +42,11 @@ function deriveBiases(rows: BiasRow[]): Biases {
   return { focus: [...new Set(focus)], avoid: [...new Set(avoid)] };
 }
 
+/** Roll a fresh workout for the current type + bias rows. */
+function roll(typeKey: WorkoutType["key"], rows: BiasRow[]): GeneratedWorkout {
+  return generateWorkout(typeKey, deriveBiases(rows));
+}
+
 interface SessionState {
   phase: Phase;
   typeKey: WorkoutType["key"];
@@ -78,10 +83,7 @@ export const useSession = create<SessionState>((set, get) => ({
   toggleType: (key) =>
     set((s) => {
       const typeKey = s.typeKey === key ? "standard" : key;
-      return {
-        typeKey,
-        workout: generateWorkout(typeKey, deriveBiases(s.biasRows)),
-      };
+      return { typeKey, workout: roll(typeKey, s.biasRows) };
     }),
 
   setBiasKind: (index, kind) =>
@@ -92,7 +94,7 @@ export const useSession = create<SessionState>((set, get) => ({
       if (rows[index].part === null) return { biasRows: rows };
       return {
         biasRows: rows,
-        workout: generateWorkout(s.typeKey, deriveBiases(rows)),
+        workout: roll(s.typeKey, rows),
       };
     }),
 
@@ -105,7 +107,7 @@ export const useSession = create<SessionState>((set, get) => ({
       if (index === rows.length - 1) rows.push(emptyRow());
       return {
         biasRows: rows,
-        workout: generateWorkout(s.typeKey, deriveBiases(rows)),
+        workout: roll(s.typeKey, rows),
       };
     }),
 
@@ -116,7 +118,7 @@ export const useSession = create<SessionState>((set, get) => ({
       const rows = filtered.length > 0 ? filtered : [emptyRow()];
       return {
         biasRows: rows,
-        workout: generateWorkout(s.typeKey, deriveBiases(rows)),
+        workout: roll(s.typeKey, rows),
       };
     }),
 
@@ -125,15 +127,12 @@ export const useSession = create<SessionState>((set, get) => ({
       const rows = [emptyRow()];
       return {
         biasRows: rows,
-        workout: generateWorkout(s.typeKey, deriveBiases(rows)),
+        workout: roll(s.typeKey, rows),
       };
     }),
 
   regenerate: () =>
-    set((s) => ({
-      workout: generateWorkout(s.typeKey, deriveBiases(s.biasRows)),
-      phase: "generator",
-    })),
+    set((s) => ({ workout: roll(s.typeKey, s.biasRows), phase: "generator" })),
 
   ensureWorkout: () => {
     if (!get().workout) get().regenerate();
@@ -183,7 +182,7 @@ export const useSession = create<SessionState>((set, get) => ({
       phase: "generator",
       typeKey: "standard",
       biasRows,
-      workout: generateWorkout("standard", deriveBiases(biasRows)),
+      workout: roll("standard", biasRows),
       prevRecords: {},
       logs: {},
       saving: false,

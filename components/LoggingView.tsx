@@ -19,11 +19,10 @@ export default function LoggingView() {
   const type = WORKOUT_TYPES[workout.type];
 
   // Interleaved per-set order: set 1 [all exercises], set 2 [all exercises]...
-  const rows: { exerciseId: string; setNumber: number; idx: number }[] = [];
-  let idx = 0;
+  const rows: { exerciseId: string; setNumber: number }[] = [];
   for (let setNo = 1; setNo <= workout.sets; setNo++) {
     for (const item of workout.composition) {
-      rows.push({ exerciseId: item.exerciseId, setNumber: setNo, idx: idx++ });
+      rows.push({ exerciseId: item.exerciseId, setNumber: setNo });
     }
   }
 
