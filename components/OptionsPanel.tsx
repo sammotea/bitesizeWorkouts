@@ -26,7 +26,7 @@ export default function OptionsPanel() {
                 "rounded-[4px] border px-2 py-2.5 text-center font-display text-sm font-medium transition",
                 active
                   ? "border-charcoal bg-charcoal text-cream"
-                  : "border-line bg-cream text-charcoal-soft hover:border-charcoal/40 hover:text-charcoal",
+                  : "border-line bg-white text-charcoal-soft hover:border-charcoal/40 hover:text-charcoal",
               )}
             >
               {WORKOUT_TYPES[key].label}
@@ -55,7 +55,7 @@ export default function OptionsPanel() {
                 value={row.part ?? ""}
                 onChange={(e) => setBiasPart(i, e.target.value as BodyPart)}
                 className={clsx(
-                  "flex-1 appearance-none rounded-[4px] border border-line bg-cream px-3 py-2.5 text-sm outline-none transition focus:border-charcoal",
+                  "flex-1 appearance-none rounded-[4px] border border-line bg-white px-3 py-2.5 text-sm outline-none transition focus:border-charcoal",
                   isDraft ? "text-charcoal-soft" : "text-charcoal",
                 )}
               >
@@ -73,7 +73,7 @@ export default function OptionsPanel() {
                 <button
                   onClick={() => removeBias(i)}
                   aria-label="Remove bias"
-                  className="shrink-0 rounded-[4px] border border-line bg-cream px-3 py-2.5 text-sm text-charcoal-soft transition hover:border-charcoal/40 hover:text-charcoal"
+                  className="shrink-0 rounded-[4px] border border-line bg-white px-3 py-2.5 text-sm text-charcoal-soft transition hover:border-charcoal/40 hover:text-charcoal"
                 >
                   ✕
                 </button>
