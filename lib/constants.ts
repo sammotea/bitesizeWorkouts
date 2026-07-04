@@ -10,6 +10,7 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   major: "Major strength",
   minor: "Minor strength",
   dynamic: "Dynamic stretch",
+  rehab: "Rehab",
   static: "Static stretch",
   mobilisation: "Mobilisation",
 };
@@ -41,54 +42,60 @@ export const CATEGORY_METRIC: Record<Category, MetricType> = {
   major: "strength",
   minor: "strength",
   dynamic: "stretch",
+  rehab: "stretch",
   static: "stretch",
   mobilisation: "mobilisation",
 };
 
+// Every type includes rehab: 1 (always-on rehab exercise). static/mobilisation
+// are "tail" categories — placed once at the end, single set (see expandWorkout).
 export const WORKOUT_TYPES: Record<WorkoutType["key"], WorkoutType> = {
   standard: {
     key: "standard",
     label: "Standard",
-    slots: { major: 1, minor: 1, dynamic: 1, static: 1 },
+    slots: { major: 1, minor: 1, dynamic: 1, rehab: 1, static: 1 },
     sets: 2,
   },
   fatigued: {
     key: "fatigued",
     label: "Fatigued",
-    slots: { major: 1, minor: 1, dynamic: 1, static: 1 },
+    slots: { major: 1, minor: 1, dynamic: 1, rehab: 1, static: 1 },
     sets: 1,
   },
   energised: {
     key: "energised",
     label: "Energised",
-    slots: { major: 2, minor: 2, dynamic: 1, static: 1 },
+    slots: { major: 2, minor: 2, dynamic: 1, rehab: 1, static: 1 },
     sets: 2,
   },
-  rehab: {
-    key: "rehab",
-    label: "Rehab only",
-    slots: { minor: 1, dynamic: 1, static: 1, mobilisation: 1 },
+  stretches: {
+    key: "stretches",
+    label: "Stretches only",
+    slots: { dynamic: 2, rehab: 1, static: 2, mobilisation: 1 },
     sets: 1,
   },
 };
 
-/** Short abbreviations for compact slot summaries (e.g. "1Maj 1Min"). */
-export const CATEGORY_ABBR: Record<Category, string> = {
-  major: "Maj",
-  minor: "Min",
-  dynamic: "Dyn",
-  static: "Sta",
-  mobilisation: "Mob",
-};
-
-/** Order categories appear within a single set. */
+/** Order categories appear within a single set (composition order). */
 export const CATEGORY_ORDER: Category[] = [
   "major",
   "minor",
   "dynamic",
+  "rehab",
   "static",
   "mobilisation",
 ];
+
+/** Categories that repeat once per set (the circuit). */
+export const REPEATED_CATEGORIES: Category[] = [
+  "major",
+  "minor",
+  "dynamic",
+  "rehab",
+];
+
+/** Categories placed once at the very end, single set (the cooldown tail). */
+export const TAIL_CATEGORIES: Category[] = ["static", "mobilisation"];
 
 // ── Generator weighting (tunable) ────────────────────────────────────────────
 

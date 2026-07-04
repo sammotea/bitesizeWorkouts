@@ -6,6 +6,12 @@ import { useSession, logKey } from "@/lib/store";
 import { getExercise } from "@/data/exercises";
 import { CATEGORY_LABELS, WORKOUT_TYPES } from "@/lib/constants";
 import { metricFields, formatBookRef } from "@/lib/format";
+import { expandWorkout } from "@/lib/generator";
+import {
+  getStoredSecret,
+  setStoredSecret,
+  clearStoredSecret,
+} from "@/lib/session-auth";
 import type { SetLog } from "@/lib/types";
 import Button from "./Button";
 
@@ -14,50 +20,60 @@ export default function LoggingView() {
   const { workout, logs, prevRecords, updateLog, reset } = useSession();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [needsPassword, setNeedsPassword] = useState(false);
+  const [password, setPassword] = useState("");
 
   if (!workout) return null;
   const type = WORKOUT_TYPES[workout.type];
 
-  // Interleaved per-set order: set 1 [all exercises], set 2 [all exercises]...
-  const rows: { exerciseId: string; setNumber: number }[] = [];
-  for (let setNo = 1; setNo <= workout.sets; setNo++) {
-    for (const item of workout.composition) {
-      rows.push({ exerciseId: item.exerciseId, setNumber: setNo });
+  // Circuit repeats per set; static/mobilisation run once at the end.
+  const rows = expandWorkout(workout);
+
+  // Finish: save with the stored password, or reveal the password field.
+  function finish() {
+    const secret = getStoredSecret();
+    if (!secret) {
+      setNeedsPassword(true);
+      return;
     }
+    void doSave(secret);
   }
 
-  async function finish() {
+  function submitPassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (!password) return;
+    setStoredSecret(password);
+    setNeedsPassword(false);
+    void doSave(password);
+  }
+
+  async function doSave(secret: string) {
     if (!workout) return;
     setSaving(true);
     setError(null);
 
-    const setLogs: SetLog[] = [];
-    for (let setNo = 1; setNo <= workout.sets; setNo++) {
-      for (const item of workout.composition) {
-        const entry = logs[logKey(item.exerciseId, setNo)];
-        const weight = parseNum(entry?.weight);
-        const reps = parseNum(entry?.reps);
-        const durationSec = parseNum(entry?.durationSec);
+    const setLogs: SetLog[] = expandWorkout(workout).map((slot) => {
+      const entry = logs[logKey(slot.exerciseId, slot.setNumber)];
+      const weight = parseNum(entry?.weight);
+      const reps = parseNum(entry?.reps);
+      const durationSec = parseNum(entry?.durationSec);
+      return {
+        exerciseId: slot.exerciseId,
+        setNumber: slot.setNumber,
+        weight,
+        reps,
+        durationSec,
         // Empty set => not done.
-        const completed =
-          weight !== null || reps !== null || durationSec !== null;
-        setLogs.push({
-          exerciseId: item.exerciseId,
-          setNumber: setNo,
-          weight,
-          reps,
-          durationSec,
-          completed,
-        });
-      }
-    }
+        completed: weight !== null || reps !== null || durationSec !== null,
+      };
+    });
 
     try {
       const res = await fetch("/api/workouts", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-app-secret": process.env.NEXT_PUBLIC_APP_SECRET ?? "",
+          "x-app-secret": secret,
         },
         body: JSON.stringify({
           type: workout.type,
@@ -66,6 +82,13 @@ export default function LoggingView() {
           sets: setLogs,
         }),
       });
+      if (res.status === 401) {
+        clearStoredSecret();
+        setError("Wrong password — try again.");
+        setNeedsPassword(true);
+        setSaving(false);
+        return;
+      }
       if (!res.ok) throw new Error(`Save failed (${res.status})`);
       const { id } = await res.json();
       reset();
@@ -160,9 +183,35 @@ export default function LoggingView() {
         </p>
       )}
 
-      <Button onClick={finish} disabled={saving} className="w-full py-4 text-sm">
-        {saving ? "Saving…" : "Finish Workout"}
-      </Button>
+      {needsPassword ? (
+        <form onSubmit={submitPassword} className="flex flex-col gap-2.5">
+          <input
+            type="password"
+            name="save-password"
+            autoComplete="current-password"
+            autoFocus
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Save password"
+            className="w-full rounded-[4px] border border-line bg-white px-4 py-3.5 text-sm outline-none transition focus:border-charcoal"
+          />
+          <Button
+            type="submit"
+            disabled={saving || !password}
+            className="w-full py-4 text-sm"
+          >
+            {saving ? "Saving…" : "Unlock & Save"}
+          </Button>
+        </form>
+      ) : (
+        <Button
+          onClick={finish}
+          disabled={saving}
+          className="w-full py-4 text-sm"
+        >
+          {saving ? "Saving…" : "Finish Workout"}
+        </Button>
+      )}
     </div>
   );
 }

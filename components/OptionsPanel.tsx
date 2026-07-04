@@ -6,7 +6,11 @@ import { clsx } from "@/lib/clsx";
 import type { BodyPart, WorkoutType } from "@/lib/types";
 
 // Standard is the implied default, so it isn't shown as a toggle.
-const TYPE_TOGGLES: WorkoutType["key"][] = ["fatigued", "energised", "rehab"];
+const TYPE_TOGGLES: WorkoutType["key"][] = [
+  "fatigued",
+  "energised",
+  "stretches",
+];
 
 export default function OptionsPanel() {
   const { typeKey, biasRows, toggleType, setBiasKind, setBiasPart, removeBias } =

@@ -3,6 +3,8 @@ import {
   CATEGORY_ORDER,
   FOCUS_BOOST,
   PREFERENCE_WEIGHT,
+  REPEATED_CATEGORIES,
+  TAIL_CATEGORIES,
   WORKOUT_TYPES,
 } from "./constants";
 import type {
@@ -103,4 +105,38 @@ export function generateWorkout(
       slot,
     })),
   };
+}
+
+/** One (exercise, set) entry in logging/save order. */
+export interface WorkoutSlot {
+  exerciseId: string;
+  category: Category;
+  setNumber: number;
+}
+
+/**
+ * Expand a workout into the ordered (exercise, set) list used by logging,
+ * saving, and history. The single source of truth for set count + order:
+ *   - Repeated categories (strength/dynamic/rehab) run the circuit `sets` times,
+ *     interleaved (all exercises set 1, then all set 2, …).
+ *   - Tail categories (static/mobilisation) each appear once at the very end.
+ */
+export function expandWorkout(workout: GeneratedWorkout): WorkoutSlot[] {
+  const repeated = workout.composition.filter((c) =>
+    REPEATED_CATEGORIES.includes(c.category),
+  );
+  const tail = workout.composition.filter((c) =>
+    TAIL_CATEGORIES.includes(c.category),
+  );
+
+  const out: WorkoutSlot[] = [];
+  for (let set = 1; set <= workout.sets; set++) {
+    for (const it of repeated) {
+      out.push({ exerciseId: it.exerciseId, category: it.category, setNumber: set });
+    }
+  }
+  for (const it of tail) {
+    out.push({ exerciseId: it.exerciseId, category: it.category, setNumber: 1 });
+  }
+  return out;
 }

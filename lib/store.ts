@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import { generateWorkout } from "./generator";
+import { generateWorkout, expandWorkout } from "./generator";
 import type {
   Biases,
   BodyPart,
@@ -154,14 +154,12 @@ export const useSession = create<SessionState>((set, get) => ({
     }
 
     const logs: Record<string, LogEntry> = {};
-    for (let setNo = 1; setNo <= workout.sets; setNo++) {
-      for (const item of workout.composition) {
-        logs[logKey(item.exerciseId, setNo)] = {
-          weight: "",
-          reps: "",
-          durationSec: "",
-        };
-      }
+    for (const slot of expandWorkout(workout)) {
+      logs[logKey(slot.exerciseId, slot.setNumber)] = {
+        weight: "",
+        reps: "",
+        durationSec: "",
+      };
     }
 
     set({ phase: "logging", prevRecords, logs });

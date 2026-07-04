@@ -4,6 +4,7 @@ export type Category =
   | "major"
   | "minor"
   | "dynamic"
+  | "rehab"
   | "static"
   | "mobilisation";
 
@@ -41,10 +42,12 @@ export interface Exercise {
 export type MetricType = "strength" | "stretch" | "mobilisation";
 
 export interface WorkoutType {
-  key: "standard" | "fatigued" | "energised" | "rehab";
+  key: "standard" | "fatigued" | "energised" | "stretches";
   label: string;
   /** How many of each category to draw. */
   slots: Partial<Record<Category, number>>;
+  /** Sets for the repeated circuit (strength/dynamic/rehab). Tail categories
+   *  (static/mobilisation) always run a single set — see expandWorkout(). */
   sets: number;
 }
 
