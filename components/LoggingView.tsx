@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, logKey } from "@/lib/store";
 import { getExercise } from "@/data/exercises";
-import { CATEGORY_LABELS, WORKOUT_TYPES } from "@/lib/constants";
+import { CATEGORY_LABELS, TAIL_CATEGORIES, WORKOUT_TYPES } from "@/lib/constants";
 import { metricFields, formatBookRef } from "@/lib/format";
-import { expandWorkout } from "@/lib/generator";
+import { expandWorkout, type WorkoutSlot } from "@/lib/generator";
 import {
   getStoredSecret,
   setStoredSecret,
@@ -105,6 +105,83 @@ export default function LoggingView() {
     }
   }
 
+  // Group into circuit sets + the trailing stretch/mobilisation block, so we
+  // can put a break between each set, between the sets and the stretch, etc.
+  const groups: WorkoutSlot[][] = [];
+  let lastKey = "";
+  for (const row of rows) {
+    const key = TAIL_CATEGORIES.includes(row.category)
+      ? "tail"
+      : `set-${row.setNumber}`;
+    if (key !== lastKey) {
+      groups.push([]);
+      lastKey = key;
+    }
+    groups[groups.length - 1].push(row);
+  }
+
+  const renderRow = (row: WorkoutSlot) => {
+    const ex = getExercise(row.exerciseId);
+    if (!ex) return null;
+    const fields = metricFields(ex.category);
+    const prev = prevRecords[row.exerciseId];
+    const key = logKey(row.exerciseId, row.setNumber);
+    const entry = logs[key] ?? { weight: "", reps: "", durationSec: "" };
+    const ref = formatBookRef(ex.bookRef);
+
+    return (
+      <li
+        key={key}
+        className="group rounded-lg border border-line bg-white p-4 transition-colors focus-within:border-mint focus-within:bg-mint"
+      >
+        <div className="mb-3 flex items-baseline justify-between gap-2">
+          <div className="min-w-0">
+            <div className="font-display text-lg font-black uppercase leading-tight">
+              {ex.name}
+            </div>
+            <div className="text-sm text-charcoal-soft">
+              {CATEGORY_LABELS[ex.category]}
+              {ref ? ` · ${ref}` : ""}
+            </div>
+          </div>
+          <div className="shrink-0 rounded-[4px] bg-line px-2.5 py-1 text-sm font-display font-medium uppercase tracking-widest text-charcoal-soft transition-colors group-focus-within:bg-white">
+            Set {row.setNumber}
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          {fields.map((f) => {
+            const placeholder =
+              prev && prev[f.key] != null ? String(prev[f.key]) : "";
+            return (
+              <label key={f.key} className="flex-1">
+                <span className="mb-1 block text-sm font-display font-medium uppercase tracking-widest text-charcoal-soft">
+                  {f.label}
+                  {f.unit ? ` (${f.unit})` : ""}
+                </span>
+                <input
+                  type="number"
+                  inputMode={f.integer ? "numeric" : "decimal"}
+                  min={0}
+                  step={f.step}
+                  value={entry[f.key]}
+                  placeholder={placeholder}
+                  onChange={(e) => {
+                    // No negatives; whole numbers only where required.
+                    let v = e.target.value.replace(/-/g, "");
+                    if (f.integer) v = v.replace(/[.,]/g, "");
+                    updateLog(key, f.key, v);
+                  }}
+                  className="w-full rounded-[4px] border border-line bg-cream px-3 py-2.5 font-display text-2xl font-black tabular-nums outline-none transition placeholder:font-body placeholder:text-sm placeholder:font-normal placeholder:text-charcoal-soft/50 focus:border-charcoal group-focus-within:bg-white"
+                />
+              </label>
+            );
+          })}
+        </div>
+      </li>
+    );
+  };
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
@@ -119,69 +196,14 @@ export default function LoggingView() {
         </button>
       </div>
 
-      <ol className="flex flex-col gap-3">
-        {rows.map((row) => {
-          const ex = getExercise(row.exerciseId);
-          if (!ex) return null;
-          const fields = metricFields(ex.category);
-          const prev = prevRecords[row.exerciseId];
-          const key = logKey(row.exerciseId, row.setNumber);
-          const entry = logs[key] ?? { weight: "", reps: "", durationSec: "" };
-          const ref = formatBookRef(ex.bookRef);
+      {groups.map((group, gi) => (
+        <Fragment key={gi}>
+          {gi > 0 && <div className="border-t border-line" />}
+          <ol className="flex flex-col gap-3">{group.map(renderRow)}</ol>
+        </Fragment>
+      ))}
 
-          return (
-            <li
-              key={key}
-              className="group rounded-lg border border-line bg-white p-4 transition-colors focus-within:border-mint focus-within:bg-mint"
-            >
-              <div className="mb-3 flex items-baseline justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="font-display text-lg font-black uppercase leading-tight">
-                    {ex.name}
-                  </div>
-                  <div className="text-sm text-charcoal-soft">
-                    {CATEGORY_LABELS[ex.category]}
-                    {ref ? ` · ${ref}` : ""}
-                  </div>
-                </div>
-                <div className="shrink-0 rounded-[4px] bg-line px-2.5 py-1 text-sm font-display font-medium uppercase tracking-widest text-charcoal-soft transition-colors group-focus-within:bg-white">
-                  Set {row.setNumber}
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                {fields.map((f) => {
-                  const placeholder =
-                    prev && prev[f.key] != null ? String(prev[f.key]) : "";
-                  return (
-                    <label key={f.key} className="flex-1">
-                      <span className="mb-1 block text-sm font-display font-medium uppercase tracking-widest text-charcoal-soft">
-                        {f.label}
-                        {f.unit ? ` (${f.unit})` : ""}
-                      </span>
-                      <input
-                        type="number"
-                        inputMode={f.integer ? "numeric" : "decimal"}
-                        min={0}
-                        step={f.step}
-                        value={entry[f.key]}
-                        placeholder={placeholder}
-                        onChange={(e) => {
-                          // No negatives; whole numbers only where required.
-                          let v = e.target.value.replace(/-/g, "");
-                          if (f.integer) v = v.replace(/[.,]/g, "");
-                          updateLog(key, f.key, v);
-                        }}
-                        className="w-full rounded-[4px] border border-line bg-cream px-3 py-2.5 font-display text-2xl font-black tabular-nums outline-none transition placeholder:font-body placeholder:text-sm placeholder:font-normal placeholder:text-charcoal-soft/50 focus:border-charcoal group-focus-within:bg-white"
-                      />
-                    </label>
-                  );
-                })}
-              </div>
-            </li>
-          );
-        })}
-      </ol>
+      <div className="border-t border-line" />
 
       {/* Per-workout: comment + max heart rate. */}
       <div className="flex flex-col gap-3">
@@ -212,6 +234,8 @@ export default function LoggingView() {
           />
         </label>
       </div>
+
+      <div className="border-t border-line" />
 
       {error && (
         <p className="rounded-[4px] bg-red-100 px-4 py-3 text-sm text-red-800">
