@@ -19,7 +19,8 @@ Single user, no accounts. Hosted on Vercel with a Neon (Postgres) database.
 3. **Accept** — tap any exercise to lock the workout in and expand into the logging view.
 4. **Log** — work through the sets in order; each metric input is placeholdered with your previous
    record for that exercise (blank if there's no history).
-5. **Finish** — saves the workout; empty sets are recorded as "not done".
+5. **Finish** — add an optional comment + max heart rate, then save. Empty sets are skipped (not
+   saved), so history shows only what you actually did.
 6. **Review** — **History** lists past workouts; **Library** lists every exercise, each linking to
    its own logged progression.
 
@@ -124,14 +125,17 @@ interface Exercise {
 
 ```
 workouts   id · performed_at · type · biases(jsonb) · composition(jsonb) · finished
+           · comment · max_heart_rate
 set_logs   id · workout_id → workouts · exercise_id · set_number
            · weight · reps · duration_sec · completed · created_at
 ```
 
+- Only sets with at least one metric are saved; empty sets aren't written, so history shows only
+  what was done. History renders only the metrics that were filled (no placeholder dashes).
 - **Workout history** = `workouts` + aggregated `set_logs`.
 - **Per-exercise history** = `set_logs` filtered by `exercise_id`, joined for the date.
-- **Previous-record placeholder** = most recent *completed* set for that exercise, taking the latest
-  non-null value per field independently (weight / reps / duration).
+- **Previous-record placeholder** = most recent set for that exercise, taking the latest non-null
+  value per field independently (weight / reps / duration).
 
 Metrics are derived from category: strength → weight + reps; stretch → hold (s) + reps;
 mobilisation → time (s).
