@@ -27,15 +27,16 @@ Single user, no accounts. Hosted on Vercel with a Neon (Postgres) database.
 
 ## How generation works
 
-The library has **5 categories**: `major` / `minor` strength, `dynamic` / `static` stretches, and
-`mobilisation`. Each workout **type** requests a fixed number of slots per category:
+The library has **6 categories**: `major` / `minor` strength, `dynamic` / `static` stretches,
+`rehab`, and `mobilisation`. Every workout also **always includes 1 rehab** exercise. Each **type**
+requests a fixed number of slots per category:
 
-| Type      | Composition                                   | Sets |
-| --------- | --------------------------------------------- | ---- |
-| Standard  | 1 major · 1 minor · 1 dynamic · 1 static      | 2    |
-| Fatigued  | 1 major · 1 minor · 1 dynamic · 1 static      | 1    |
-| Energised | 2 major · 2 minor · 1 dynamic · 1 static      | 2    |
-| Rehab     | 1 minor · 1 dynamic · 1 static · 1 mobilisation | 1  |
+| Type           | Composition                                             | Sets |
+| -------------- | ------------------------------------------------------- | ---- |
+| Standard       | 1 major · 1 minor · 1 dynamic · 1 rehab · 1 static      | 2    |
+| Fatigued       | 1 major · 1 minor · 1 dynamic · 1 rehab · 1 static      | 1    |
+| Energised      | 2 major · 2 minor · 1 dynamic · 1 rehab · 1 static      | 2    |
+| Stretches only | 2 dynamic · 1 rehab · 2 static · 1 mobilisation         | 1    |
 
 Selection (in [`lib/generator.ts`](lib/generator.ts)) is weighted-random, no duplicates per workout:
 
@@ -47,8 +48,15 @@ Selection (in [`lib/generator.ts`](lib/generator.ts)) is weighted-random, no dup
 4. **Graceful degradation** — if a category can't supply enough exercises after filtering, the
    workout silently includes fewer (or skips that slot). No warnings.
 
-The logging view expands the composition into **interleaved set order** — e.g. a 2-set Standard is
-`major, minor, dynamic, static, major, minor, dynamic, static`.
+### Set order — circuit then cooldown
+
+`expandWorkout()` is the single source of truth for set count + order:
+
+- **Repeated circuit** (major, minor, dynamic, rehab) runs `sets` times, interleaved —
+  e.g. a 2-set Standard is `major, minor, dynamic, rehab, major, minor, dynamic, rehab`.
+- **Tail** (static, mobilisation) then appears **once at the very end, single set** — never repeated.
+
+So `workout.sets` is the count for the *repeated circuit*, not every exercise.
 
 ---
 
@@ -173,9 +181,22 @@ npm run db:push     # create the workouts + set_logs tables in your Neon DB
 npm run dev         # http://localhost:3000
 ```
 
+Set `APP_SECRET` in `.env.local` to a long random string — it's the save password (see Auth).
+
 The app **runs without a database** — generate / reroll / accept all work and history pages show an
 empty state. The database is only needed to **save** workouts and to see history + previous-record
 placeholders.
+
+### Auth
+
+Saving is guarded by a **password** you choose — set as the server-only `APP_SECRET` env var. On the
+first save on a device, an inline password field appears; the value is kept in `localStorage`
+(plaintext, persists across sessions until cleared) and sent as the `x-app-secret` header on every
+save. The server ([`lib/auth.ts`](lib/auth.ts)) compares it to `APP_SECRET`; a mismatch returns 401,
+the client forgets it, and the field reappears. Reads (history/library) are open.
+
+To change the password, update `APP_SECRET` in `.env.local` (restart dev) **and** in Vercel
+(redeploy). If `APP_SECRET` is unset, the guard is skipped (saving is open) — handy for local dev.
 
 ---
 
@@ -185,8 +206,9 @@ If the Neon database was created via Vercel's **Storage** integration, `DATABASE
 into the project's environment automatically — no `.env` file is used in production.
 
 1. Ensure `DATABASE_URL` exists in **Settings → Environment Variables** (Production).
-2. **Redeploy** — env vars only apply to deployments created after they were added.
-3. The schema must exist in the database (`npm run db:push` once, locally, against that DB).
+2. Add `APP_SECRET` (the save password) as a Production env var.
+3. **Redeploy** — env vars only apply to deployments created after they were added.
+4. The schema must exist in the database (`npm run db:push` once, locally, against that DB).
 
 ---
 
@@ -195,12 +217,11 @@ into the project's environment automatically — no `.env` file is used in produ
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `DATABASE_URL` | Yes (for saving/history) | Neon Postgres connection string |
-| `APP_SECRET` | Optional | If set, the save endpoint requires a matching header |
-| `NEXT_PUBLIC_APP_SECRET` | Optional | Client copy of the above (same value) |
+| `APP_SECRET` | Recommended | The save password (server-only). If unset, saving is open. |
 
 > Secrets live only in `.env.local` (gitignored) or the Vercel dashboard — never committed.
-> With `APP_SECRET` unset (the default), the save endpoint is open. See the security note in
-> [DECISIONS.md](DECISIONS.md).
+> `APP_SECRET` is server-only (never `NEXT_PUBLIC_*`), so it isn't shipped to the browser — the user
+> types it once per session. See [DECISIONS.md](DECISIONS.md).
 
 ---
 

@@ -44,6 +44,16 @@ For one person, editing a typed file is faster and simpler than building CRUD sc
   fewer items. For a personal tool, a quietly-shorter workout beats an error dialog.
 - **Whole-workout reroll**, plus **auto-reroll when options change**, so the shown workout always
   reflects the current settings. Weighting constants are intentionally tunable in `lib/constants.ts`.
+- **Always-on rehab.** Every type carries `rehab: 1`, so a rehab exercise is always included (drawn
+  from a category currently seeded with one ankle drill). Encoded per-type rather than as a special
+  global rule — explicit and controllable.
+- **Circuit-then-cooldown ordering.** Set count is no longer uniform across a workout: strength,
+  dynamic, and rehab form a circuit repeated `sets` times; static and mobilisation are a "tail" run
+  once at the very end (single set). Categories are classified as `REPEATED_CATEGORIES` /
+  `TAIL_CATEGORIES` in `lib/constants.ts`, and `expandWorkout()` in `lib/generator.ts` is the single
+  source of truth for the resulting order — logging, saving, and history all go through it, so the
+  rule lives in exactly one place. (Category-level rather than per-type: the "static goes last" rule
+  is global. A per-type or block-based model would be more flexible but is over-built for n=1.)
 
 ## UI / interaction
 
@@ -59,13 +69,22 @@ For one person, editing a typed file is faster and simpler than building CRUD sc
 - **White-on-mid rule.** Components with a background that sit on a mid-tone background use white, to
   stay legible without introducing more palette steps.
 
-## Security
+## Security / auth
 
 - Secrets live only in `.env.local` (gitignored) or the Vercel dashboard. The repo has been audited
-  to confirm no credentials are present in any commit; only placeholder templates were ever tracked.
-- **The save endpoint is intentionally open.** `APP_SECRET` is optional and currently unset. A
-  `NEXT_PUBLIC_*` value ships to the browser, so it would be security theatre, not real auth — for a
-  private, low-stakes, single-user app this trade-off is accepted knowingly.
+  to confirm no credentials are present in any commit.
+- **Saving requires a password you set.** The authoritative value is `APP_SECRET`, server-only
+  (never `NEXT_PUBLIC_*`, so it never ships in the bundle) — set once in `.env.local` + Vercel. On
+  the first save on a device an inline password field appears; the entry is kept in `localStorage`
+  and sent as `x-app-secret`. The server compares it to `APP_SECRET` and 401s on mismatch (client
+  then forgets it and re-shows the field). Reads stay open.
+- The `localStorage` copy is **plaintext** — readable by same-origin JS, devtools, and anything that
+  scrapes the browser profile. This is a **knowingly accepted** trade-off: the PIN only gates
+  writing workouts to a private DB (no PII/money), so "enter once per device" convenience wins over
+  encrypting it. A proper httpOnly-cookie login was considered and declined as over-engineering here.
+- This replaced an earlier `NEXT_PUBLIC_APP_SECRET` guard, which was security theatre (a public
+  "secret" is no secret). The session-password approach is genuinely secret-free on the client until
+  the user types it, which is the right amount of protection for a private n=1 tool.
 
 ## Known limitations / future
 
