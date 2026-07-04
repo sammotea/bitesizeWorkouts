@@ -22,6 +22,8 @@ export default function LoggingView() {
   const [error, setError] = useState<string | null>(null);
   const [needsPassword, setNeedsPassword] = useState(false);
   const [password, setPassword] = useState("");
+  const [comment, setComment] = useState("");
+  const [maxHeartRate, setMaxHeartRate] = useState("");
 
   if (!workout) return null;
   const type = WORKOUT_TYPES[workout.type];
@@ -52,21 +54,23 @@ export default function LoggingView() {
     setSaving(true);
     setError(null);
 
-    const setLogs: SetLog[] = expandWorkout(workout).map((slot) => {
-      const entry = logs[logKey(slot.exerciseId, slot.setNumber)];
-      const weight = parseNum(entry?.weight);
-      const reps = parseNum(entry?.reps);
-      const durationSec = parseNum(entry?.durationSec);
-      return {
-        exerciseId: slot.exerciseId,
-        setNumber: slot.setNumber,
-        weight,
-        reps,
-        durationSec,
-        // Empty set => not done.
-        completed: weight !== null || reps !== null || durationSec !== null,
-      };
-    });
+    // Only persist sets that actually have data — empty sets are skipped.
+    const setLogs: SetLog[] = expandWorkout(workout)
+      .map((slot) => {
+        const entry = logs[logKey(slot.exerciseId, slot.setNumber)];
+        return {
+          exerciseId: slot.exerciseId,
+          setNumber: slot.setNumber,
+          weight: parseNum(entry?.weight),
+          reps: parseNum(entry?.reps),
+          durationSec: parseNum(entry?.durationSec),
+          completed: true,
+        };
+      })
+      .filter(
+        (s) =>
+          s.weight !== null || s.reps !== null || s.durationSec !== null,
+      );
 
     try {
       const res = await fetch("/api/workouts", {
@@ -80,6 +84,8 @@ export default function LoggingView() {
           biases: workout.biases,
           composition: workout.composition,
           sets: setLogs,
+          comment: comment.trim() || null,
+          maxHeartRate: parseNum(maxHeartRate),
         }),
       });
       if (res.status === 401) {
@@ -176,6 +182,36 @@ export default function LoggingView() {
           );
         })}
       </ol>
+
+      {/* Per-workout: comment + max heart rate. */}
+      <div className="flex flex-col gap-3">
+        <label className="flex flex-col gap-1">
+          <span className="text-sm font-display font-medium uppercase tracking-widest text-charcoal-soft">
+            Comment
+          </span>
+          <textarea
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            rows={3}
+            className="w-full resize-none rounded-[4px] border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-charcoal"
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-sm font-display font-medium uppercase tracking-widest text-charcoal-soft">
+            Max heart rate (bpm)
+          </span>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={0}
+            value={maxHeartRate}
+            onChange={(e) =>
+              setMaxHeartRate(e.target.value.replace(/[^\d]/g, ""))
+            }
+            className="w-full rounded-[4px] border border-line bg-white px-4 py-3 font-display text-2xl font-black tabular-nums outline-none transition focus:border-charcoal"
+          />
+        </label>
+      </div>
 
       {error && (
         <p className="rounded-[4px] bg-red-100 px-4 py-3 text-sm text-red-800">

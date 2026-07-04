@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getExercise } from "@/data/exercises";
 import { getExerciseHistory } from "@/lib/db/queries";
 import { CATEGORY_LABELS, BODY_PART_LABELS } from "@/lib/constants";
-import { metricFields, formatBookRef } from "@/lib/format";
+import { metricFields, formatBookRef, formatSetMetrics } from "@/lib/format";
 import { formatDate } from "@/lib/datetime";
 
 export const dynamic = "force-dynamic";
@@ -69,12 +69,7 @@ export default async function ExerciseHistoryPage({
               {formatDate(h.performedAt)} · set {h.setNumber}
             </span>
             <span className="font-display font-black tabular-nums">
-              {fields
-                .map((f) => {
-                  const v = h[f.key];
-                  return v != null ? `${v}${f.unit ?? ""}` : "—";
-                })
-                .join("  ·  ")}
+              {formatSetMetrics(fields, h)}
             </span>
           </li>
         ))}

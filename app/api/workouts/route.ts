@@ -30,6 +30,15 @@ export async function POST(req: Request) {
       biases: body.biases ?? { avoid: [], focus: [] },
       composition: body.composition,
       sets: body.sets ?? [],
+      comment:
+        typeof body.comment === "string" && body.comment.trim()
+          ? body.comment.trim()
+          : null,
+      maxHeartRate:
+        typeof body.maxHeartRate === "number" &&
+        Number.isFinite(body.maxHeartRate)
+          ? body.maxHeartRate
+          : null,
     });
     return NextResponse.json({ id });
   } catch (e) {

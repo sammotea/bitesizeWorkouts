@@ -14,6 +14,8 @@ export interface SaveWorkoutInput {
   biases: Biases;
   composition: CompositionItem[];
   sets: SetLog[];
+  comment: string | null;
+  maxHeartRate: number | null;
 }
 
 export async function saveWorkout(input: SaveWorkoutInput): Promise<string> {
@@ -25,6 +27,8 @@ export async function saveWorkout(input: SaveWorkoutInput): Promise<string> {
       biases: input.biases,
       composition: input.composition,
       finished: true,
+      comment: input.comment,
+      maxHeartRate: input.maxHeartRate,
     })
     .returning({ id: workouts.id });
 

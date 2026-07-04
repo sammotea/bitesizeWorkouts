@@ -42,3 +42,24 @@ const FIELDS: Record<MetricType, MetricField[]> = {
 export function metricFields(category: Category): MetricField[] {
   return FIELDS[CATEGORY_METRIC[category]];
 }
+
+// Units shown next to each metric in summaries (reps has none on the input).
+const SUMMARY_UNITS: Record<MetricField["key"], string> = {
+  weight: "kg",
+  reps: "reps",
+  durationSec: "s",
+};
+
+/**
+ * Format the filled metrics of a logged set for summary views,
+ * e.g. "10 kg · 12 reps" or "300 s". Skips metrics that weren't entered.
+ */
+export function formatSetMetrics(
+  fields: MetricField[],
+  values: Record<MetricField["key"], number | string | null>,
+): string {
+  return fields
+    .filter((f) => values[f.key] != null)
+    .map((f) => `${values[f.key]} ${SUMMARY_UNITS[f.key]}`)
+    .join("  ·  ");
+}

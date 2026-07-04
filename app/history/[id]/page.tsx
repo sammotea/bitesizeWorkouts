@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getWorkout } from "@/lib/db/queries";
 import { getExercise } from "@/data/exercises";
 import { CATEGORY_LABELS, WORKOUT_TYPES } from "@/lib/constants";
-import { metricFields, formatBookRef } from "@/lib/format";
+import { metricFields, formatBookRef, formatSetMetrics } from "@/lib/format";
 import { formatDateTime } from "@/lib/datetime";
 import type { SetLogRow } from "@/lib/db/schema";
 
@@ -35,7 +35,15 @@ export default async function WorkoutDetailPage({
         </h1>
         <p className="mt-1 text-sm text-charcoal-soft">
           {formatDateTime(workout.performedAt)}
+          {workout.maxHeartRate != null
+            ? ` · ${workout.maxHeartRate} bpm max`
+            : ""}
         </p>
+        {workout.comment && (
+          <p className="mt-3 rounded-[6px] border border-line bg-line p-4 text-sm">
+            {workout.comment}
+          </p>
+        )}
       </div>
 
       <ul className="flex flex-col gap-3">
@@ -43,9 +51,11 @@ export default async function WorkoutDetailPage({
           const ex = getExercise(item.exerciseId);
           if (!ex) return null;
           const fields = metricFields(ex.category);
+          // Only show sets that were actually logged (skip empties).
           const exSets = sets
-            .filter((s) => s.exerciseId === item.exerciseId)
+            .filter((s) => s.exerciseId === item.exerciseId && hasMetric(s))
             .sort((a, b) => a.setNumber - b.setNumber);
+          if (exSets.length === 0) return null;
           const ref = formatBookRef(ex.bookRef);
 
           return (
@@ -81,6 +91,10 @@ export default async function WorkoutDetailPage({
   );
 }
 
+function hasMetric(set: SetLogRow): boolean {
+  return set.weight != null || set.reps != null || set.durationSec != null;
+}
+
 function SetRow({
   set,
   fields,
@@ -88,21 +102,11 @@ function SetRow({
   set: SetLogRow;
   fields: ReturnType<typeof metricFields>;
 }) {
-  const parts = fields.map((f) => {
-    const v = set[f.key];
-    return v != null ? `${v}${f.unit ? f.unit : ""}` : "—";
-  });
   return (
     <div className="flex items-center justify-between text-sm">
       <span className="text-charcoal-soft">Set {set.setNumber}</span>
-      <span
-        className={
-          set.completed
-            ? "font-display font-black tabular-nums"
-            : "text-charcoal-soft/60"
-        }
-      >
-        {set.completed ? parts.join("  ·  ") : "not done"}
+      <span className="font-display font-black tabular-nums">
+        {formatSetMetrics(fields, set)}
       </span>
     </div>
   );

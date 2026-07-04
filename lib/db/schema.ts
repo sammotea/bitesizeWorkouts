@@ -19,6 +19,8 @@ export const workouts = pgTable("workouts", {
   biases: jsonb("biases").$type<Biases>().notNull(),
   composition: jsonb("composition").$type<CompositionItem[]>().notNull(),
   finished: boolean("finished").default(true).notNull(),
+  comment: text("comment"),
+  maxHeartRate: integer("max_heart_rate"),
 });
 
 export const setLogs = pgTable("set_logs", {
