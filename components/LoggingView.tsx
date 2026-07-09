@@ -7,13 +7,10 @@ import { getExercise } from "@/data/exercises";
 import { CATEGORY_LABELS, TAIL_CATEGORIES, WORKOUT_TYPES } from "@/lib/constants";
 import { metricFields, formatBookRef } from "@/lib/format";
 import { expandWorkout, type WorkoutSlot } from "@/lib/generator";
-import {
-  getStoredSecret,
-  setStoredSecret,
-  clearStoredSecret,
-} from "@/lib/session-auth";
+import { getStoredSecret, clearStoredSecret } from "@/lib/session-auth";
 import type { SetLog } from "@/lib/types";
 import Button from "./Button";
+import PasswordForm from "./PasswordForm";
 
 export default function LoggingView() {
   const router = useRouter();
@@ -21,7 +18,6 @@ export default function LoggingView() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [needsPassword, setNeedsPassword] = useState(false);
-  const [password, setPassword] = useState("");
   const [comment, setComment] = useState("");
   const [maxHeartRate, setMaxHeartRate] = useState("");
 
@@ -39,14 +35,6 @@ export default function LoggingView() {
       return;
     }
     void doSave(secret);
-  }
-
-  function submitPassword(e: React.FormEvent) {
-    e.preventDefault();
-    if (!password) return;
-    setStoredSecret(password);
-    setNeedsPassword(false);
-    void doSave(password);
   }
 
   async function doSave(secret: string) {
@@ -140,6 +128,7 @@ export default function LoggingView() {
               {ex.name}
             </div>
             <div className="text-sm text-charcoal-soft">
+              {row.role === "rehab" ? "Rehab · " : ""}
               {CATEGORY_LABELS[ex.category]}
               {ref ? ` · ${ref}` : ""}
             </div>
@@ -244,25 +233,13 @@ export default function LoggingView() {
       )}
 
       {needsPassword ? (
-        <form onSubmit={submitPassword} className="flex flex-col gap-2.5">
-          <input
-            type="password"
-            name="save-password"
-            autoComplete="current-password"
-            autoFocus
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Save password"
-            className="w-full rounded-[4px] border border-line bg-white px-4 py-3.5 text-sm outline-none transition focus:border-charcoal"
-          />
-          <Button
-            type="submit"
-            disabled={saving || !password}
-            className="w-full py-4 text-sm"
-          >
-            {saving ? "Saving…" : "Unlock & Save"}
-          </Button>
-        </form>
+        <PasswordForm
+          busy={saving}
+          onSubmit={(secret) => {
+            setNeedsPassword(false);
+            void doSave(secret);
+          }}
+        />
       ) : (
         <Button
           onClick={finish}

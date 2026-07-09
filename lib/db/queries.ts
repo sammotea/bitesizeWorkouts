@@ -1,10 +1,13 @@
 import { desc, eq, inArray } from "drizzle-orm";
 import { getDb } from "./index";
-import { setLogs, workouts } from "./schema";
+import { rehabDays, setLogs, workouts } from "./schema";
+import { generateRehabProgram } from "@/lib/generator";
+import { REHAB_TRACKER } from "@/lib/constants";
 import type {
   Biases,
   CompositionItem,
   PreviousRecord,
+  RehabDay,
   SetLog,
   WorkoutType,
 } from "@/lib/types";
@@ -138,4 +141,73 @@ export async function getPreviousRecords(
   }
 
   return result;
+}
+
+// ── Daily rehab tracker ──────────────────────────────────────────────────────
+
+function toRehabDay(row: typeof rehabDays.$inferSelect): RehabDay {
+  return {
+    date: row.date,
+    exerciseIds: row.exerciseIds,
+    progress: row.progress,
+  };
+}
+
+/** Read-only peek (used by the landing page) — never creates a row. */
+export async function getRehabDay(date: string): Promise<RehabDay | null> {
+  const db = getDb();
+  const [row] = await db
+    .select()
+    .from(rehabDays)
+    .where(eq(rehabDays.date, date));
+  return row ? toRehabDay(row) : null;
+}
+
+/**
+ * Get the day's program, generating + persisting it on first request.
+ * Persisted picks keep the day identical across devices and immune to
+ * mid-day library edits.
+ */
+export async function getOrCreateRehabDay(date: string): Promise<RehabDay> {
+  const existing = await getRehabDay(date);
+  if (existing) return existing;
+
+  const exerciseIds = generateRehabProgram();
+  const progress = Object.fromEntries(
+    exerciseIds.map((id) => [id, Array(REHAB_TRACKER.sets).fill(false)]),
+  );
+
+  const db = getDb();
+  await db
+    .insert(rehabDays)
+    .values({ date, exerciseIds, progress })
+    .onConflictDoNothing(); // lost race → the other insert wins
+
+  return (await getRehabDay(date))!;
+}
+
+/** Toggle one set tick; returns the updated day (null if day/exercise unknown). */
+export async function setRehabTick(
+  date: string,
+  exerciseId: string,
+  setIndex: number,
+  done: boolean,
+): Promise<RehabDay | null> {
+  const day = await getRehabDay(date);
+  if (!day) return null;
+  const ticks = day.progress[exerciseId];
+  if (!ticks || setIndex < 0 || setIndex >= ticks.length) return null;
+
+  const progress = {
+    ...day.progress,
+    [exerciseId]: ticks.map((t, i) => (i === setIndex ? done : t)),
+  };
+
+  const db = getDb();
+  await db
+    .update(rehabDays)
+    .set({ progress })
+    .where(eq(rehabDays.date, date));
+
+  return { ...day, progress };
 }

@@ -54,7 +54,7 @@ export default function GeneratorView() {
             <li key={`${item.exerciseId}-${item.slot}`}>
               <ExerciseRow
                 name={ex.name}
-                meta={`${CATEGORY_LABELS[item.category]}${ref ? ` · ${ref}` : ""}`}
+                meta={`${item.role === "rehab" ? "Rehab · " : ""}${CATEGORY_LABELS[item.category]}${ref ? ` · ${ref}` : ""}`}
                 onClick={accept}
               />
             </li>

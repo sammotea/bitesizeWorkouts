@@ -40,5 +40,17 @@ export const setLogs = pgTable("set_logs", {
     .notNull(),
 });
 
+/** One row per calendar day (client-local YYYY-MM-DD) for the rehab tracker. */
+export const rehabDays = pgTable("rehab_days", {
+  date: text("date").primaryKey(),
+  exerciseIds: jsonb("exercise_ids").$type<string[]>().notNull(),
+  // Per exercise: one boolean per set.
+  progress: jsonb("progress").$type<Record<string, boolean[]>>().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 export type WorkoutRow = typeof workouts.$inferSelect;
 export type SetLogRow = typeof setLogs.$inferSelect;
+export type RehabDayRow = typeof rehabDays.$inferSelect;

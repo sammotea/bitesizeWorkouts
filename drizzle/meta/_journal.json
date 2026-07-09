@@ -15,6 +15,13 @@
       "when": 1783180947568,
       "tag": "0001_remarkable_shen",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783599225955,
+      "tag": "0002_optimal_harpoon",
+      "breakpoints": true
     }
   ]
 }

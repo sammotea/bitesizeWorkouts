@@ -1,10 +1,10 @@
 // ── Core domain types ───────────────────────────────────────────────────────
 
+/** Pure movement taxonomy — drives metrics and workout category slots. */
 export type Category =
   | "major"
   | "minor"
   | "dynamic"
-  | "rehab"
   | "static"
   | "mobilisation";
 
@@ -19,8 +19,26 @@ export type BodyPart =
   | "upper-leg" // absorbs hips/glutes/quads/hamstrings
   | "lower-leg"; // absorbs calves/ankles
 
-/** 5 = strongly preferred … 1 = strongly disliked. 3 = neutral default. */
-export type Preference = 1 | 2 | 3 | 4 | 5;
+/**
+ * Selection weighting within a pool.
+ * 5 = strongly preferred … 1 = strongly disliked; "always" = pinned — chosen
+ * before weighted sampling (pins compete if they exceed the slot count).
+ */
+export type Weighting = 1 | 2 | 3 | 4 | 5 | "always";
+
+/**
+ * Role membership + weighting, one entry per selection pool.
+ * Presence = membership: an exercise without `workout` never appears in
+ * generated workouts; without `dailyRehab` it never appears in the tracker.
+ */
+export interface ExercisePools {
+  /** Main bitesize-workout draw (via its category slot). */
+  workout?: Weighting;
+  /** Candidate for the workout's rehab slot. */
+  workoutRehab?: Weighting;
+  /** Candidate for the piecemeal daily rehab tracker. */
+  dailyRehab?: Weighting;
+}
 
 export interface BookRef {
   title: string;
@@ -34,7 +52,7 @@ export interface Exercise {
   name: string;
   category: Category;
   bodyParts: BodyPart[];
-  preference: Preference;
+  pools: ExercisePools;
   bookRef?: BookRef;
 }
 
@@ -44,10 +62,13 @@ export type MetricType = "strength" | "stretch" | "mobilisation";
 export interface WorkoutType {
   key: "standard" | "fatigued" | "energised" | "stretches";
   label: string;
-  /** How many of each category to draw. */
+  /** How many of each category to draw (from the `workout` pool). */
   slots: Partial<Record<Category, number>>;
-  /** Sets for the repeated circuit (strength/dynamic/rehab). Tail categories
-   *  (static/mobilisation) always run a single set — see expandWorkout(). */
+  /** How many rehab-role picks to draw (from the `workoutRehab` pool). */
+  rehabSlots: number;
+  /** Sets for the repeated circuit (strength/dynamic/rehab picks). Tail
+   *  categories (static/mobilisation) always run a single set — see
+   *  expandWorkout(). */
   sets: number;
 }
 
@@ -62,6 +83,8 @@ export interface CompositionItem {
   category: Category;
   /** Slot ordering index within a single set. */
   slot: number;
+  /** Set when this pick fills the workout's rehab slot (badged in the UI). */
+  role?: "rehab";
 }
 
 export interface GeneratedWorkout {
@@ -70,6 +93,16 @@ export interface GeneratedWorkout {
   sets: number;
   /** Ordered, one entry per exercise (single set). */
   composition: CompositionItem[];
+}
+
+// ── Daily rehab tracker ──────────────────────────────────────────────────────
+
+/** One day's rehab program + tick state. Date is the client's local day. */
+export interface RehabDay {
+  date: string; // YYYY-MM-DD
+  exerciseIds: string[];
+  /** Per exercise: one boolean per set. */
+  progress: Record<string, boolean[]>;
 }
 
 // ── Logging / persistence shapes ─────────────────────────────────────────────
