@@ -328,6 +328,14 @@ export const EXERCISES: Exercise[] = [
     pools: { workout: 3, dailyRehab: 2 },
   },
 
+  {
+    id: "ex_100",
+    name: "Gorilla Walk",
+    category: "dynamic",
+    bodyParts: ["upper-leg"],
+    pools: { workout: 4, dailyRehab: 2 },
+  },
+
   // ── Static stretches ───────────────────────────────────────────────────────
   {
     id: "ex_041",
