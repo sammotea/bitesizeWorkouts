@@ -100,6 +100,17 @@ export const TAIL_CATEGORIES: Category[] = ["static", "mobilisation"];
 /** Shape of each day's tracker program (tunable). */
 export const REHAB_TRACKER = { exercises: 3, sets: 3 };
 
+/**
+ * A special once-a-day hold, tracked outside the exercise library / pools.
+ * `key` is a reserved progress key — keep it stable so tick state survives when
+ * the name or target changes. (Not an exercise; never part of workouts.)
+ */
+export const REHAB_HOLD = {
+  key: "hold",
+  name: "Deep squat",
+  targetSeconds: 120,
+} as const;
+
 // ── Selection weighting (tunable) ────────────────────────────────────────────
 
 /** Relative likelihood multiplier per 1–5 weighting ("always" pins instead). */

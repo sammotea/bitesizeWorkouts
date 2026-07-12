@@ -2,7 +2,7 @@ import { desc, eq, inArray } from "drizzle-orm";
 import { getDb } from "./index";
 import { rehabDays, setLogs, workouts } from "./schema";
 import { generateRehabProgram } from "@/lib/generator";
-import { REHAB_TRACKER } from "@/lib/constants";
+import { REHAB_HOLD, REHAB_TRACKER } from "@/lib/constants";
 import type {
   Biases,
   CompositionItem,
@@ -170,12 +170,25 @@ export async function getRehabDay(date: string): Promise<RehabDay | null> {
  */
 export async function getOrCreateRehabDay(date: string): Promise<RehabDay> {
   const existing = await getRehabDay(date);
-  if (existing) return existing;
+  if (existing) {
+    // Backfill the special daily hold for days created before it existed.
+    if (!(REHAB_HOLD.key in existing.progress)) {
+      const progress = { ...existing.progress, [REHAB_HOLD.key]: [false] };
+      const db = getDb();
+      await db
+        .update(rehabDays)
+        .set({ progress })
+        .where(eq(rehabDays.date, date));
+      return { ...existing, progress };
+    }
+    return existing;
+  }
 
   const exerciseIds = generateRehabProgram();
-  const progress = Object.fromEntries(
+  const progress: Record<string, boolean[]> = Object.fromEntries(
     exerciseIds.map((id) => [id, Array(REHAB_TRACKER.sets).fill(false)]),
   );
+  progress[REHAB_HOLD.key] = [false];
 
   const db = getDb();
   await db

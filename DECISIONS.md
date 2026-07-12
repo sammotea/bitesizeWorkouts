@@ -61,6 +61,12 @@ add-on):
   button; the feature is piecemeal by design.
 - **Create-on-GET** is an unguarded write (worst case: empty rows for arbitrary dates) — accepted
   for n=1 so the page loads without auth; ticks themselves are password-guarded.
+- **Special daily hold outside the library** (`REHAB_HOLD`): a once-a-day fixture (a 2-minute deep
+  squat) that never fits the sampled/pooled model — it's a fixed ritual, not an exercise, and never
+  appears in workouts. Kept as config (name + `targetSeconds`) with a *stable reserved progress
+  key* so its tick state survives changing the name or duration. Stored in the same `rehab_days`
+  `progress` jsonb (variable-length arrays already allow a 1-tick item), so it needed no migration;
+  existing days backfill the key on read. A countdown timer would be a later UI-only add.
 - Today-only view for now; per-day rows make a history/streak view a cheap later addition.
 
 ## Generator behaviour

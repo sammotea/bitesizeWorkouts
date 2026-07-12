@@ -37,6 +37,11 @@ done (tap again to undo); every tap saves instantly. The landing card shows live
 ("4/9 done today"). "A day" is your local calendar day, not UTC. Program shape is
 `REHAB_TRACKER = { exercises: 3, sets: 3 }` in [`lib/constants.ts`](lib/constants.ts).
 
+A special **once-a-day hold** (`REHAB_HOLD` in the same file — a "Deep squat", 2 min) sits at the
+top, tracked outside the exercise library and pools: it's a fixed daily ritual, never sampled and
+never part of workouts. Edit its `name`/`targetSeconds` freely; its reserved progress `key` stays
+stable so tick state survives the change.
+
 ---
 
 ## Pools — membership + weighting per feature

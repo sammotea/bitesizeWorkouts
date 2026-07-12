@@ -6,6 +6,11 @@ export function formatBookRef(ref?: BookRef): string | null {
   return `${ref.title}, p${ref.page}`;
 }
 
+/** Whole minutes → "N min"; otherwise "N s". */
+export function formatDuration(seconds: number): string {
+  return seconds % 60 === 0 ? `${seconds / 60} min` : `${seconds} s`;
+}
+
 export interface MetricField {
   key: "weight" | "reps" | "durationSec";
   label: string;

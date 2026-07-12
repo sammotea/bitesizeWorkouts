@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { getExercise } from "@/data/exercises";
-import { CATEGORY_LABELS } from "@/lib/constants";
-import { formatBookRef } from "@/lib/format";
+import { CATEGORY_LABELS, REHAB_HOLD } from "@/lib/constants";
+import { formatBookRef, formatDuration } from "@/lib/format";
 import { localDate } from "@/lib/datetime";
 import { getStoredSecret, clearStoredSecret } from "@/lib/session-auth";
 import { clsx } from "@/lib/clsx";
@@ -109,6 +109,9 @@ export default function RehabView() {
   const ticks = day ? Object.values(day.progress).flat() : [];
   const done = ticks.filter(Boolean).length;
 
+  const holdSets = day?.progress[REHAB_HOLD.key] ?? [];
+  const holdDone = holdSets.length > 0 && holdSets.every(Boolean);
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between text-sm font-display font-medium uppercase tracking-widest text-charcoal-soft">
@@ -142,6 +145,42 @@ export default function RehabView() {
       )}
 
       <ol className="flex flex-col gap-3">
+        {day && (
+          <li
+            key="hold"
+            className={clsx(
+              "rounded-lg border bg-white p-4 transition-colors",
+              holdDone ? "border-mint" : "border-line",
+            )}
+          >
+            <div className="mb-3 min-w-0">
+              <div className="font-display text-lg font-black uppercase leading-tight">
+                {REHAB_HOLD.name}
+              </div>
+              <div className="text-sm text-charcoal-soft">
+                {formatDuration(REHAB_HOLD.targetSeconds)} hold
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              {holdSets.map((isDone, i) => (
+                <button
+                  key={i}
+                  onClick={() => toggle(REHAB_HOLD.key, i)}
+                  aria-pressed={isDone}
+                  className={clsx(
+                    "h-14 flex-1 rounded-[4px] border font-display text-lg font-black tabular-nums transition-colors",
+                    isDone
+                      ? "border-mint bg-mint text-charcoal"
+                      : "border-line bg-cream text-charcoal-soft hover:border-charcoal/40",
+                  )}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+          </li>
+        )}
         {day?.exerciseIds.map((id) => {
           const ex = getExercise(id);
           if (!ex) return null;
