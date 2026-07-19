@@ -234,6 +234,18 @@ export function generateRehabProgram(
   ).map((ex) => ex.id);
 }
 
+/**
+ * All exercises in the `dailyRehab` pool, minus any `excludeIds` — the
+ * candidate list for swapping a drill in the tracker. Sorted by name so the
+ * picker is stable and browsable.
+ */
+export function dailyRehabCandidates(excludeIds: string[] = []): Exercise[] {
+  const exclude = new Set(excludeIds);
+  return EXERCISES.filter(
+    (ex) => ex.pools.dailyRehab !== undefined && !exclude.has(ex.id),
+  ).sort((a, b) => a.name.localeCompare(b.name));
+}
+
 /** Convenience: does this exercise belong to the given pool? */
 export function inPool(ex: Exercise, pool: keyof ExercisePools): boolean {
   return ex.pools[pool] !== undefined;

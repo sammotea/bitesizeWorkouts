@@ -67,6 +67,13 @@ add-on):
   key* so its tick state survives changing the name or duration. Stored in the same `rehab_days`
   `progress` jsonb (variable-length arrays already allow a 1-tick item), so it needed no migration;
   existing days backfill the key on read. A countdown timer would be a later UI-only add.
+- **Swap by explicit pick, not redraw.** A drill can be swapped for any other `dailyRehab`
+  candidate via a picker (chosen over a random reroll: rehab is deliberate — you swap *to* address a
+  specific niggle, not to reshuffle). The swap keeps the drill's slot position, discards its ticks,
+  and seeds the newcomer fresh; other drills' progress and the hold are untouched. It reuses the
+  tick `PATCH` route (a discriminated `{action:"swap"}` body) and the same password guard — no new
+  endpoint. The server validates the target is a real, not-already-scheduled `dailyRehab` exercise,
+  so a stale client can't corrupt the day.
 - Today-only view for now; per-day rows make a history/streak view a cheap later addition.
 
 ## Generator behaviour

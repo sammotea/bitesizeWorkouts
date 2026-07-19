@@ -2,6 +2,7 @@ import { desc, eq, inArray } from "drizzle-orm";
 import { getDb } from "./index";
 import { rehabDays, setLogs, workouts } from "./schema";
 import { generateRehabProgram } from "@/lib/generator";
+import { getExercise } from "@/data/exercises";
 import { REHAB_HOLD, REHAB_TRACKER } from "@/lib/constants";
 import type {
   Biases,
@@ -197,6 +198,41 @@ export async function getOrCreateRehabDay(date: string): Promise<RehabDay> {
     .onConflictDoNothing(); // lost race → the other insert wins
 
   return (await getRehabDay(date))!;
+}
+
+/**
+ * Swap one drill for another in a day's program, preserving its position.
+ * The replacement must be a `dailyRehab` candidate not already scheduled;
+ * its ticks start fresh (the removed drill's ticks are discarded).
+ * Returns null (no change) if the day, source, or target is invalid.
+ */
+export async function swapRehabExercise(
+  date: string,
+  fromId: string,
+  toId: string,
+): Promise<RehabDay | null> {
+  const day = await getRehabDay(date);
+  if (!day) return null;
+  if (!day.exerciseIds.includes(fromId)) return null;
+  if (day.exerciseIds.includes(toId)) return null;
+
+  const to = getExercise(toId);
+  if (!to || to.pools.dailyRehab === undefined) return null;
+
+  const exerciseIds = day.exerciseIds.map((id) => (id === fromId ? toId : id));
+  const progress: Record<string, boolean[]> = {};
+  for (const [key, ticks] of Object.entries(day.progress)) {
+    if (key !== fromId) progress[key] = ticks;
+  }
+  progress[toId] = Array(REHAB_TRACKER.sets).fill(false);
+
+  const db = getDb();
+  await db
+    .update(rehabDays)
+    .set({ exerciseIds, progress })
+    .where(eq(rehabDays.date, date));
+
+  return { ...day, exerciseIds, progress };
 }
 
 /** Toggle one set tick; returns the updated day (null if day/exercise unknown). */

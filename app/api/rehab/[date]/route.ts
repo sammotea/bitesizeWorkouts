@@ -4,6 +4,7 @@ import {
   getOrCreateRehabDay,
   getRehabDay,
   setRehabTick,
+  swapRehabExercise,
 } from "@/lib/db/queries";
 
 export const runtime = "nodejs";
@@ -37,7 +38,11 @@ export async function GET(
   }
 }
 
-/** Toggle a single set tick: body { exerciseId, setIndex, done }. */
+/**
+ * Mutate the day. Two shapes:
+ *   - tick: { exerciseId, setIndex, done }
+ *   - swap: { action: "swap", fromId, toId }
+ */
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ date: string }> },
@@ -52,6 +57,18 @@ export async function PATCH(
 
   try {
     const body = await req.json();
+
+    if (body?.action === "swap") {
+      if (typeof body.fromId !== "string" || typeof body.toId !== "string") {
+        return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+      }
+      const day = await swapRehabExercise(date, body.fromId, body.toId);
+      if (!day) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
+      return NextResponse.json(day);
+    }
+
     if (
       typeof body?.exerciseId !== "string" ||
       typeof body?.setIndex !== "number" ||

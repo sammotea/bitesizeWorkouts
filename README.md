@@ -42,6 +42,11 @@ top, tracked outside the exercise library and pools: it's a fixed daily ritual, 
 never part of workouts. Edit its `name`/`targetSeconds` freely; its reserved progress `key` stays
 stable so tick state survives the change.
 
+**Swap a drill** with the **Swap** button on any sampled card: pick a replacement from the rest of
+the `dailyRehab` pool (drills already scheduled today are hidden). The swap keeps the drill's
+position, starts the newcomer's ticks fresh, and persists like any other write. The hold isn't
+swappable.
+
 ---
 
 ## Pools — membership + weighting per feature
@@ -127,7 +132,7 @@ app/
     workouts/              POST save, GET list, GET [id]
     exercises/last/        GET previous records for placeholders
     exercises/[id]/history/ GET per-exercise logged sets
-    rehab/[date]/          GET day (get-or-create; ?peek=1 read-only) · PATCH tick
+    rehab/[date]/          GET day (get-or-create; ?peek=1 read-only) · PATCH tick / swap
 components/
   GeneratorView · LoggingView · OptionsPanel · RehabView · RehabPeek
   ExerciseRow · Button · HomeLink · PasswordForm
